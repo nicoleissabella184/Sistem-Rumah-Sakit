@@ -1,36 +1,35 @@
-import { GoogleGenAI, Schema, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { MASTER_AGENT_SYSTEM_INSTRUCTION } from "../constants";
 import { RoutingResponse } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Get API key from environment variables (works both in build and dev)
+const apiKey = typeof window === 'undefined' 
+  ? (process.env.API_KEY || "")
+  : ((window as any).__ENV__?.VITE_API_KEY || (window as any).__ENV__?.API_KEY || "");
 
-// Define the response schema for the Master Agent
-const routingSchema: Schema = {
-  type: Type.OBJECT,
-  properties: {
-    routing_decision: { type: Type.STRING },
-    chosen_subagent: { type: Type.STRING },
-    core_function_match: { type: Type.STRING },
-    context_passed: { type: Type.STRING },
-  },
-  required: ["routing_decision", "chosen_subagent", "core_function_match", "context_passed"],
-};
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export const coordinateRequest = async (userMessage: string): Promise<RoutingResponse | null> => {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", // Using Flash for responsiveness in this UI demo
-      contents: userMessage,
-      config: {
-        systemInstruction: MASTER_AGENT_SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: routingSchema,
-        temperature: 0.1, // Low temperature for deterministic routing
-      },
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    const text = response.text;
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `${MASTER_AGENT_SYSTEM_INSTRUCTION}\n\nUser request: ${userMessage}\n\nRespond in JSON format with routing_decision, chosen_subagent, core_function_match, and context_passed fields.`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const text = response.response.text();
     if (!text) return null;
 
     try {

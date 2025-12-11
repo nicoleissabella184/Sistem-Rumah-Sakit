@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgentConfig, AgentId } from '../types';
+import { AgentConfig } from '../types';
 import { BrainCircuit, UserPlus, FileHeart, Receipt, CalendarClock, Activity } from 'lucide-react';
 
 interface AgentCardProps {
