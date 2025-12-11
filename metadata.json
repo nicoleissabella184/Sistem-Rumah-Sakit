@@ -1,0 +1,5 @@
+{
+  "name": "MedAgent Core",
+  "description": "A hospital system coordinator interface that uses AI agents to route operational requests to specialized sub-modules (Patient Management, Records, Billing, Scheduling).",
+  "requestFramePermissions": []
+}
